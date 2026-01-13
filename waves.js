@@ -57,18 +57,31 @@
   function clamp01(v){ return Math.max(0, Math.min(1, v)); }
   function lerp(a,b,t){ return a + (b-a)*t; }
 
-  // Pointer (coords canvas)
+  // Pointer (coords canvas) — funciona aunque el canvas tenga pointer-events:none
   let pointer = { x: 0, y: 0, inside: false };
-  canvas.addEventListener("mousemove", (e) => {
+
+  function updatePointer(clientX, clientY) {
     const r = canvas.getBoundingClientRect();
-    pointer.x = e.clientX - r.left;
-    pointer.y = e.clientY - r.top;
-    pointer.inside = true;
+    const x = clientX - r.left;
+    const y = clientY - r.top;
+    pointer.x = x;
+    pointer.y = y;
+    pointer.inside = (x >= 0 && x <= r.width && y >= 0 && y <= r.height);
+  }
+
+  window.addEventListener("pointermove", (e) => {
+    updatePointer(e.clientX, e.clientY);
   }, { passive: true });
 
-  canvas.addEventListener("mouseleave", () => { pointer.inside = false; }, { passive: true });
-  window.addEventListener("resize", resize, { passive: true });
-  resize();
+  window.addEventListener("pointerleave", () => {
+    pointer.inside = false;
+  }, { passive: true });
+
+  // touch (opcional pero útil)
+  window.addEventListener("touchmove", (e) => {
+    if (!e.touches || !e.touches.length) return;
+    updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
 
   // Energía por línea (0..1)
   const energy = new Array(SETTINGS.lines).fill(0);
